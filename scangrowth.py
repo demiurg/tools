@@ -22,20 +22,31 @@ class Record(Model):
     path = CharField(index=True)
     size = IntegerField()
     is_file = BooleanField()
-    delta = FloatField(null=True)
+    delta = IntegerField(null=True)
+    rate = FloatField(null=True)
     stamp = DateTimeField(default=datetime.datetime.now, index=True)
 
     class Meta:
         database = db
 
 
-def save(path, size, is_file):
-    '''old = Record.select().where(
-        Record.path==path
-    ).order_by(
-        Record.timestamp
-    )'''
-    r = Record.create(path=path, size=size, is_file=is_file)
+def save(path, size, is_file, level):
+    if level > 4:
+        return
+
+    stamp = datetime.datetime.now()
+    r = Record.create(path=path, size=size, is_file=is_file, stamp=stamp)
+    try:
+        old = Record.select().where(
+            Record.path==path
+        ).order_by(
+            Record.stamp
+        )
+        r.delta = size - old[0].size
+        r.rate = r.delta / (r.stamp - old[0].stamp).total_seconds()
+    except Exception as e:
+        pass
+
     r.save()
 
 
@@ -50,11 +61,11 @@ def scan(path, v, level=None):
         stat = entry.stat(follow_symlinks=False)
         if entry.is_file(follow_symlinks=False):
             size += stat.st_size
-            save(entry.path, stat.st_size, True)
+            save(entry.path, stat.st_size, True, level)
         elif entry.is_dir(follow_symlinks=False):
             size += scan(entry.path, v, level)
 
-    save(path, size, False)
+    save(path, size, False, level)
     return size
 
 
