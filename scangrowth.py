@@ -47,7 +47,8 @@ def save(path, size, is_file, level):
         if r.delta == 0.0:
             return
     except Exception as e:
-        pass
+        r.delta = 0
+        r.rate = 0
 
     r.save()
 
