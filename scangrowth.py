@@ -87,6 +87,7 @@ def main():
     parser.add_argument('-d', '--dir', dest='dir')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true')
     parser.add_argument('-q', '--query', dest='query')
+    parser.add_argument('-t', '--top', dest='top', action='store_true')
     parser.set_defaults(init=False, dir=False, verbose=False)
 
     args = parser.parse_args()
@@ -110,8 +111,18 @@ def main():
 
     if args.query:
         cursor = db.execute_sql(args.query)
+        names = [description[0] for description in cursor.description]
+        print('\t'.join(names))
         for row in cursor.fetchall():
-            print(row)
+            print('\t'.join(map(unicode, row)))
+
+    if args.top:
+        q = 'select * from record order by rate desc limit 20'
+        cursor = db.execute_sql(q)
+        names = [description[0] for description in cursor.description]
+        print('\t'.join(names))
+        for row in cursor.fetchall():
+            print('\t'.join(map(unicode, row)))
 
 if __name__ == '__main__':
     main()
