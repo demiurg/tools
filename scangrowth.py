@@ -44,6 +44,8 @@ def save(path, size, is_file, level):
         )
         r.delta = size - old[0].size
         r.rate = r.delta / (r.stamp - old[0].stamp).total_seconds()
+        if r.delta == 0.0:
+            return
     except Exception as e:
         pass
 
@@ -83,6 +85,7 @@ def main():
     parser.add_argument('-i', '--init', dest='init', action='store_true')
     parser.add_argument('-d', '--dir', dest='dir')
     parser.add_argument('-v', '--verbose', dest='verbose', action='store_true')
+    parser.add_argument('-q', '--query', dest='query')
     parser.set_defaults(init=False, dir=False, verbose=False)
 
     args = parser.parse_args()
@@ -103,6 +106,11 @@ def main():
         path = os.path.realpath(args.dir)
         size = scan(path, args.verbose)
         print("total size of", path, "is", hbytes(size))
+
+    if args.query:
+        cursor = db.execute_sql(args.query)
+        for row in cursor.fetchall():
+            print(row)
 
 if __name__ == '__main__':
     main()
